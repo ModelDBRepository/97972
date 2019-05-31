@@ -1,0 +1,221 @@
+For any questions, comments or bug reports please email mfrank@u.arizona.edu
+
+NOTE: The models are set up to run under PDP++ 3.2a08, and the
+ analysis scripts configured to work under Linux.  If you are
+ running an older version you may have to download and install the
+ more recent version of PDP/leabra from
+ ftp://grey.colorado.edu/pub/oreilly/pdp++/. If you get error messages
+ when you load the project, please let me know or try to download that
+ version (newer PDP++ versions should work too -- but this project has
+ not yet been converted to emergent). The below instructions assume
+ some basic experience with the software; please refer to the O'Reilly
+ & Munakata (2000) textbook for an introduction.
+
+----------------------------------------------------------------------------
+
+Simulating effects of Deep Brain Stimulation of the Subthalamic
+Nucleus on Probabilistic Decision Making 
+
+leabra++ Conflict_DBS.proj.gz
+
+This project replicates the basic effects of removing the STN from
+processing (ie., a "lesion"), and applying external high frequency
+activation to the STN (DBS of the STN) on conflict-induced slowing, as
+described in Frank et al (2007), Science and Frank (2006), Neural
+Networks. (The same models were also used to simulate Parkinson's
+disease and dopamine medication effects on Go and NoGo learning, and
+performance in the Weather Prediction task and probabilistic reversal,
+as described in Frank et al 2004, Science, and Frank (2005), J Cog
+Neurosci. For those simulations, please refer to the README file and
+associated projects in BG_DA_Learn.zip, also available on ModelDB or
+via email).
+
+The network is trained with two stimuli (A and B), associated with
+probabilistic feedback, using the Train_Prob process. After each epoch
+of training, the network is tested twice using the Epoch_1 and Epoch_4
+processes. In both of these tests the network weights are frozen (they
+do not change as a function of choice) so as to assess performance of
+the network on test trials without allowing them to learn about these
+test trials. In this way we can assess conflict based responding after
+various stages of training without contaminating subsequent results.
+In Epoch_1, the network is tested with the single cues from the
+training environment that are associated with 80 or 60% reward
+probability. In Epoch_4, the network is tested with a high conflict
+combination of the two cues, each associated with a different response
+(one is 80% R1 while the other is 60% R2). This is analogous to the
+situation in which healthy individuals show slowed reaction times,
+relative to low conflict trials. To increase reliability of the
+measure, each of the epochs consists of two identical (low or high
+conflict) trials -- in principle, the same network with the same
+weights could select different responses in these two trials, and with
+different reaction times, simply due to noise in unit activity).
+
+***REACTION TIME MEASURES***
+
+To measure each network's reaction time for the different trial types,
+ use the Cycle_1 and Cycle_4 Graphlogs, which monitor the activity
+ levels of each layer in the network after every cycle of network
+ processing within each trial (where again Cycle_1 refers to low
+ conflict and Cycle_4 is high conflict). We will keep track of these
+ activity levels and compute BG model reaction times in terms of the
+ number of cycles until the output activation exceeds a threshold (see
+ below). First, make sure that the network is in the desired condition
+ (intact, lesion, DBS, meds, etc.) by selecting a setting on the
+ "SelectEdit" control panel.  Clicking "intact Run" will put the
+ network into its intact state, to simulate normal network
+ functioning.  Checking the box marked "STN lesion" will remove the
+ STN from processing altogether.  The "DBS" condition adds external
+ high frequency stimulation to the STN, functionally reducing its
+ ability to respond adaptively to its cortical inputs (see Supplement
+ of Frank et al, 2007). The "PD" button will reduce DA in the SNc
+ layer, so that only 2 of the 4 units project DA to the Striatum, and
+ limiting DA bursts during positive feedback.  And finally, selecting
+ "meds" will increase DA relative to the PD networks and also reduce
+ the DA dips during negative feedback. These were the same
+ manipulations performed in Frank, 2005 and Frank et al 2004. 
+
+Ater selecting the desired model condition, click on LogFile > Set
+ Save File in the the Cycle_1 and Cycle_4 graphlogs and name the new
+ .log file (e.g., intact_c1.log). This will save all information
+ collected into the corresponding file for later analysis. Set the
+ number of networks to train (each with its own set of random initial
+ weights) in the Batch_Prob control panel by entering a number in
+ "batch.max" (25 or 50 should be sufficient), hit "Reinit" and then
+ "Run."
+
+(Note: simulations will run considerably faster if you turn off the
+network and graphlog updating displays, by checking off the button
+marked Display on the top left corner of the network window).
+
+
+Once all networks have been run, you can analyze the resulting log
+file and determine when each response was made. We have provided a css
+script which does this for you (css is the scripting language
+associated with pdp). The script, called
+"anal_rt_thal_e20.css", analyzes model reaction times, in terms of the
+number of network processing cycles (where each cycle consists of a
+single update of units membrane potentials and activity states) until
+a response is selected by BG circuitry. Because the BG (GPi) is
+tonically inhibiting the thalamus, the best measure of when a response
+is selected is when a given Thalamic unit becomes disinhibited (no
+longer has zero activation; in contrast, cortical units have noisy
+activation during the entire settling process so if activation exceeds
+some value for a single cycle in cortex that should not necessarily be
+taken to indicate that a response was selected). Once the thalamus is
+disinhibited and a response selected, a single thalamic unit's
+activity rises sharply toward maximal firing rate (1.0). We used an
+arbitrary threshold of 50% maximal firing rate for a given Thalmus
+unit in order to quantify the reaction time -- but this arbitrary
+value does not influence the general pattern of results. 
+
+To use this script, type from a console "anal_rt_thal_e20.css
+<logfilename.log>". After churning away for a bit, this will produce a
+new file with the extension .gort20 (gort refers to the reaction time
+at which a "Go" signal facilitated a response).  This file contains
+the reaction time information (number of cycles) for every network
+that was run in the batch. Note that the script computes reaction
+times only after 20 epochs of training (hence the "e20" in the script
+name and gort20 in the output filename), once they have learned the
+probabilistic associations. Optionally, one can use the
+"anal_rt_thal.css" script (ie without the "e20") to compute RT's for
+every trial across training, which produces qualitatively similar
+results (but as expected, conflict effects are maximal after
+learning).
+ 
+ After a .gort20 file is created, another script can be used to
+ average these results across all networks in a batch (assuming you
+ have the old unixstat package with "dtsem" installed -- otherwise you
+ will have to use your own spreadsheet or other analysis tool for
+ theses stats).  This script is called "analrt.sh", and the resulting
+ file will have the extension .gort20.dt.  For example, type
+ "analrt.sh intact_c1.log.gort20."  The .dt output file will contain
+ four columns of information.  The first colum is simply the letters
+ "GM," and can be ignored.  The three columns of interest, from left
+ to right, are the number of trials for which a response was made (ie
+ a thalamus unit's activation surpassed the threshold within the
+ maximum of 200 cycles -- after this time we consider this to be a
+ non-response), followed by the mean number of cycles until the
+ response was selected, and finally, the standard error of the
+ mean. Your results should show that lesion and DBS nets are
+ considerably faster than the other networks when faced with high
+ conflict (_c4 results), and also somewhat faster than their low
+ conflict reaction times. This high conflict speeding effect was
+ observed in patients on DBS. In the model this occurs due to the
+ presence of multiple Go signals and simulated DA increases during
+ win/win conditions (SNC unit firing rate levels were increased from
+ the normal tonic level of 0.5 to 0.7 during the test phase to
+ simulate the presence of a rewarding stimulus. As described in the
+ supplement of Frank et al (2007), if DA levels are not increased and
+ remain at the tonic level, STN dysfunction still reduces
+ conflict-induced slowing but does not actually cause high-conflict
+ speeding, as we observed for lose/lose high conflict choices in DBS
+ patients).
+
+***ACCURACY MEASURES***
+
+ To measure the network's accuracy, again make sure that the network
+ is in the desired condition by selecting "intact," "DBS," etc., on
+ the control panel as described above. After selecting the desired
+ condition, find the Epoch_1 and Epoch_4 Graphlogs.  Select "Save Set
+ File" and name the new .log file (e.g, "intact_e1.log" (low conflict)
+ and "intact_e4.log" (high conflict)). Then, in the Batch_prob
+ process, set the number of networks to run and hit Reinit and Run.
+ After the model has finished running the batch, accuracy results can
+ be analyzed by using the following scripts: analtst.sh (on the
+ Epoch_1 .log file) and analtst_conf.sh (on the Epoch_4 .log file).
+ For example, for low conflict accuracy with the intact network, type
+ "analtst.sh intact_e1.log." For the high conflict (e4) logs, use
+ analtst_conf.sh instead of analtst.sh (simply because network error
+ is indexed in a different column in the e4 logs and the analysis
+ script has to know which column to average). This will output a list
+ of four columns in a new file with the extension ".log.dt".  From
+ left to right the columns are: epoch number, number of networks
+ averaged across, mean number of errors (out of 2 possible for each
+ test), and standard error.  For a general idea of how well a network
+ has done, it is easiest to look at the last row in this list, after
+ it has received all its training. If the network has an average error
+ of roughly 1.0 (out of 2.0 max, this is 50%), it is performing at
+ chance.  You should see that the intact network does not suffer
+ nearly as much in accuracy from the high conflict (e4) condition,
+ whereas the STN lesioned network performs well in low but not high
+ conflict trials. DBS networks with external stimulation do not suffer
+ as much as STN lesioned networks (for discussion, see supplement of
+ Frank et al, 2007).
+
+
+***PLOTTING LAYER ACTIVITY LEVELS DURING SELECTION***
+
+ One last script that can be run on the .log files is called
+ analcycles.sh. This script averages activity levels in the different
+ layers of the network as a function of time (cycles), averaging unit
+ activity across each layer indpendently, and across all
+ networks. This enables you to plot the different layer activity
+ levels as a function of time during response selection, using your
+ favorite graphing program.  For example, type "analycycles.sh
+ intact_c1.log."  This will output a file containing 16 columns, with
+ the extension ".cyc.dt".  The first column of the output is cycle
+ number, the second column is the number of trials that has been
+ averaged across (across different networks and multiple trials for
+ each network).  The third and fourth columns are mean and standard
+ error of STN activity, respectively. Similarly, columns
+ 5,7,9,11,13,15 are mean GPe, GPi, Motor cortex, Thalamus, Output
+ unit1, and Output unit2, respectively.  Each of these columns is
+ followed by a column of the standard error for that layer.
+
+
+*** SETTING TONIC DA LEVELS; OSCILLATIONS AND PARKINSON"S TREMOR ***
+
+
+Tonic DA levels are set in the control panel. Default = .03 means that
+this is the external input, which translates to around 0.5 activity
+levels in the SNc units (but these are also noisy).  You should also
+see that if you set tonic levels to 0, some oscillations should be
+observed in STN and GP layers on some trials (corresponding to
+Parkinson's tremor). You can look at these more carefully in the cycle
+graph logs where activity levels of the various layers are
+recorded. These oscillations are more reliably observed for high
+conflict trials (due to greater overall input from cortex to STN,
+which is what causes the rebound STN burst activity associated with
+each oscillation (Frank, 2006)). The oscillations can also be more
+reliably induced in a network with more competing alternatives, such
+as the 4-alternative choice model in Frank (2006). 

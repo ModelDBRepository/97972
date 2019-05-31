@@ -1,0 +1,4 @@
+.edits[0].mbr_bases[8].dt.vm = 1.0; // allow STN to oscillate due to high freq external input (fast time constant)
+.edits[0].mbr_bases[9].acc.on = true;  // allow STN to accommodate as a function of ext input 
+.environments.TestFreq_Hard.event_specs[0].patterns.STN.type = "INPUT"; // set external stimulation
+.environments.TestFreq.event_specs[0].patterns.STN.type = "INPUT"; // set external stimulation

@@ -1,0 +1,74 @@
+#!/usr/local/bin/css -f
+
+void Anal(String fnm) {
+  fstream istrm;
+  istrm.open(fnm, ios::in);
+
+  fstream ostrm;
+  ostrm.open(fnm + ".gort", ios::out);
+
+  int epc;
+  int rt_go[3200];
+  int  cycle;
+  int cycle_max = 200;
+  float thal, m1;
+  int i, l;
+  int settle;
+ int cycle_col, thal_col;
+
+  while(!istrm.eof() && istrm.good()) {
+    String_Array& col = ReadLine(istrm);
+    if(istrm.eof() || istrm.bad()) break;
+
+    if(col[0].contains("_H:")) {
+      if (col[7].contains("cycle")) {
+	cycle_col =7;  // columns for cycle and thalamus are different 
+	thal_col = 12; // in c1 and c4 log files; adjust here
+      }
+      
+      else {cycle_col = 8; thal_col = 13;}
+
+      continue;
+    }	
+
+
+    cycle = col[cycle_col];
+    thal = col[thal_col];
+ 
+ if (cycle==0) {
+   settle=0; 
+   rt_go[i]= cycle_max; //initialize the rt to be maximum
+ }	
+    
+ if (settle==0) { // check if net has settled on resp yet	
+   if (thal>.25) { // check if average thal act is > .25, which means that a single unit > .5
+     rt_go[i]=cycle; // if so, then set the rt to be this cycle
+     settle =1;  // network has settled on response
+   }
+ }
+
+ if (cycle== (cycle_max -1)) i++;
+ 
+  }
+
+
+  for (i=0;i<1600;i++) { 
+
+    if ((rt_go[i]!=0)&&(rt_go[i]!=cycle_max))  
+    ostrm << "_D:" << "\t" <<  i << "\t" << rt_go[i] << "\n";
+  }  
+  istrm.close();
+  ostrm.close();
+  cout << fnm << ".gort:\n";
+  system("more " + fnm + ".gort");
+  cout << "\n";
+}
+
+void Main() {
+  int i;
+  for(i=1;i<argc;i++) {
+    Anal(argv[i]);
+  }
+}
+
+Main();
